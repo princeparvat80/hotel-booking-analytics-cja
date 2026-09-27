@@ -9,7 +9,7 @@ export default function Home() {
     trackPageView('home')
   }, [])
 
-  const featured = hotels.slice(0, 8)
+  const featured = hotels // show the full inventory on the home page
 
   return (
     <>
@@ -27,7 +27,7 @@ export default function Home() {
       <section className="section container">
         <div className="section-head">
           <div>
-            <h2>Featured stays</h2>
+            <h2>Explore {featured.length} stays</h2>
             <p>Hand-picked hotels loved by TripNest travellers</p>
           </div>
         </div>
