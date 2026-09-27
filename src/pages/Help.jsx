@@ -34,10 +34,6 @@ export default function Help() {
         </div>
       </div>
 
-      <p className="debug-note">
-        ❓ This page pushed a <code>pageView</code> event (page name: <code>help</code>).
-      </p>
-
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 8 }}>
         {FAQS.map((f) => (
           <div className="panel" key={f.q}>

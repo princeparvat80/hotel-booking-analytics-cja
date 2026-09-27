@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { findHotel } from '../data/hotels'
 import { trackCheckout, trackPurchase } from '../analytics/track'
+import { getUser } from '../analytics/session'
 
 function newBookingId() {
   return 'TN-' + Math.random().toString(36).slice(2, 8).toUpperCase()
@@ -18,9 +19,10 @@ export default function Checkout() {
     totalValue: hotel?.pricePerNight || 0,
   }
 
+  const sessionUser = getUser()
   const [guest, setGuest] = useState({
-    firstName: '', lastName: '', email: '', phone: '',
-    paymentMethod: 'credit-card', loyaltyTier: 'gold',
+    firstName: '', lastName: '', email: sessionUser?.email || '', phone: '',
+    paymentMethod: 'credit-card', loyaltyTier: sessionUser?.loyaltyTier || 'gold',
   })
 
   useEffect(() => {
@@ -59,12 +61,6 @@ export default function Checkout() {
       <h1 style={{ fontSize: 30, marginBottom: 6 }}>Complete your booking</h1>
       <p style={{ color: 'var(--muted)', marginBottom: 20 }}>
         {hotel.name} — {hotel.city}, {hotel.country}
-      </p>
-
-      <p className="debug-note">
-        🧾 This page pushed a <code>checkout</code> event (→ commerce.checkouts / scCheckout).
-        Clicking <b>Confirm &amp; pay</b> pushes <code>purchase</code> (→ commerce.order with
-        revenue) — the Analytics <b>purchase</b> event. The Tags property sends both via Web SDK.
       </p>
 
       <form className="checkout-grid" onSubmit={pay}>
@@ -116,6 +112,8 @@ export default function Checkout() {
           <h3>Booking summary</h3>
           <div className="row"><span>Hotel</span><span>{hotel.name}</span></div>
           <div className="row"><span>Room</span><span>{details.roomType}</span></div>
+          {details.ratePlan && <div className="row"><span>Rate plan</span><span>{details.ratePlan}</span></div>}
+          {details.boardType && <div className="row"><span>Board</span><span>{details.boardType}</span></div>}
           <div className="row"><span>Trip type</span><span>{details.tripType}</span></div>
           <div className="row"><span>Check-in</span><span>{details.checkInDate}</span></div>
           <div className="row"><span>Check-out</span><span>{details.checkOutDate}</span></div>

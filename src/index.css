@@ -86,6 +86,17 @@ img { display: block; max-width: 100%; }
 }
 .field input:focus, .field select:focus { border-color: var(--brand); }
 
+/* Custom autocomplete dropdown */
+.autocomplete {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 60;
+  background: #fff; border: 1px solid var(--line); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg); list-style: none; max-height: 260px; overflow-y: auto;
+}
+.autocomplete li {
+  padding: 11px 14px; font-size: 15px; cursor: pointer; color: var(--ink);
+}
+.autocomplete li:hover, .autocomplete li.active { background: var(--brand-light); color: var(--brand-dark); }
+
 /* pull hero search up into content */
 .search-wrap { margin-top: -80px; position: relative; z-index: 10; }
 

@@ -18,6 +18,11 @@ export default function SearchResults() {
   const destination = params.get('destination') || ''
   const guests = params.get('guests') || '2'
   const tripType = params.get('tripType') || 'leisure'
+  const checkIn = params.get('checkIn') || ''
+  const checkOut = params.get('checkOut') || ''
+  const nights = checkIn && checkOut
+    ? Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / 864e5))
+    : undefined
 
   const [starFilter, setStarFilter] = useState([])
   const [maxPrice, setMaxPrice] = useState(500)
@@ -40,6 +45,7 @@ export default function SearchResults() {
       destination: destination || 'all',
       searchTerm: destination || 'all',
       resultsCount: base.length,
+      checkIn, checkOut, nights, guests, tripType,
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [destination])
@@ -65,6 +71,7 @@ export default function SearchResults() {
       resultsCount: filtered.length,
       filterApplied: filterDesc,
       sortOrder: sort,
+      checkIn, checkOut, nights, guests, tripType,
     })
   }
 
@@ -77,13 +84,6 @@ export default function SearchResults() {
   return (
     <div className="container section">
       <SearchBar compact initial={{ destination, guests, tripType }} />
-
-      <p className="debug-note">
-        🔎 Data flow: this search pushed a <code>search</code> event to
-        <code> window.adobeDataLayer</code>. The Tags property maps it to a
-        <code> commerce.productListViews</code> XDM event and sends it to Adobe
-        Analytics via the Web SDK + datastream.
-      </p>
 
       <div className="results" style={{ marginTop: 24 }}>
         <aside className="filters">

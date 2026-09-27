@@ -1,10 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import SignInModal from './SignInModal.jsx'
+import { getUser, onUserChange } from '../analytics/session'
+import { trackLogout } from '../analytics/track'
 
 export default function Header() {
   const [modalOpen, setModalOpen] = useState(false)
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState(getUser()) // persisted across refresh
+
+  // Keep the header in sync with session changes (login/logout).
+  useEffect(() => onUserChange(setUser), [])
+
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1)
 
   return (
     <header className="header">
@@ -20,9 +27,12 @@ export default function Header() {
         </nav>
         <div className="header-cta">
           {user ? (
-            <span className="nav" style={{ color: 'var(--brand)' }}>
-              ◆ {user.tier.charAt(0).toUpperCase() + user.tier.slice(1)} · {user.email}
-            </span>
+            <>
+              <span className="nav" style={{ color: 'var(--brand)' }}>
+                ◆ {cap(user.loyaltyTier)} · {user.email}
+              </span>
+              <button className="btn btn-outline" onClick={trackLogout}>Sign out</button>
+            </>
           ) : (
             <button className="btn btn-outline" onClick={() => setModalOpen(true)}>
               Sign in
@@ -31,11 +41,7 @@ export default function Header() {
         </div>
       </div>
 
-      <SignInModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSignedIn={(u) => setUser(u)}
-      />
+      <SignInModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </header>
   )
 }

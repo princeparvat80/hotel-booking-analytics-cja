@@ -4,7 +4,7 @@ import { trackLogin } from '../analytics/track'
 // Lightweight demo sign-in. It does NOT authenticate anything — it just captures
 // an email, pushes a `login` event to the data layer (great for the analytics
 // demo), and closes.
-export default function SignInModal({ open, onClose, onSignedIn }) {
+export default function SignInModal({ open, onClose }) {
   const [email, setEmail] = useState('')
   const [tier, setTier] = useState('gold')
 
@@ -12,8 +12,8 @@ export default function SignInModal({ open, onClose, onSignedIn }) {
 
   const submit = (e) => {
     e.preventDefault()
+    // trackLogin persists the session and notifies the header via onUserChange.
     trackLogin({ email, loyaltyTier: tier })
-    onSignedIn?.({ email, tier })
     onClose()
   }
 
@@ -46,9 +46,6 @@ export default function SignInModal({ open, onClose, onSignedIn }) {
             Sign in
           </button>
         </form>
-        <p className="debug-note" style={{ marginTop: 16, marginBottom: 0 }}>
-          🔐 Signing in pushes a <code>login</code> event to the data layer.
-        </p>
       </div>
     </div>
   )

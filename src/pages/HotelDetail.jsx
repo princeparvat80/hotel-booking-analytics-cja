@@ -20,8 +20,11 @@ export default function HotelDetail() {
   const [checkIn, setCheckIn] = useState(today)
   const [checkOut, setCheckOut] = useState(tomorrow)
   const [guests, setGuests] = useState(2)
+  const [rooms, setRooms] = useState(1)
   const [roomType, setRoomType] = useState(hotel?.roomTypes?.[0] || '')
   const [tripType, setTripType] = useState('leisure')
+  const [ratePlan, setRatePlan] = useState('Best Flexible Rate')
+  const [boardType, setBoardType] = useState('Breakfast included')
 
   useEffect(() => {
     if (hotel) trackHotelView(hotel)
@@ -29,7 +32,7 @@ export default function HotelDetail() {
   }, [id])
 
   const nights = useMemo(() => nightsBetween(checkIn, checkOut), [checkIn, checkOut])
-  const total = hotel ? hotel.pricePerNight * nights : 0
+  const total = hotel ? hotel.pricePerNight * nights * rooms : 0
 
   if (!hotel) {
     return (
@@ -44,8 +47,10 @@ export default function HotelDetail() {
 
   const book = () => {
     const details = {
-      roomType, tripType, checkInDate: checkIn, checkOutDate: checkOut,
-      nights, guests: Number(guests), totalValue: total,
+      roomType, ratePlan, boardType, tripType,
+      checkInDate: checkIn, checkOutDate: checkOut,
+      nights, guests: Number(guests), rooms: Number(rooms), totalValue: total,
+      cancellationPolicy: ratePlan.includes('Non-refundable') ? 'non-refundable' : 'free-24h',
     }
     trackBookingStart(hotel, details)
     navigate(`/checkout/${hotel.id}`, { state: { details } })
@@ -88,11 +93,6 @@ export default function HotelDetail() {
             </div>
           </div>
 
-          <p className="debug-note">
-            👁️ On load this page pushed a <code>hotelView</code> event to the data layer
-            (the Tags property maps it to <code>commerce.productViews</code> / prodView).
-            Clicking <b>Book now</b> pushes <code>bookingStart</code> (→ productListAdds / scAdd).
-          </p>
         </div>
 
         <aside className="booking-box">
@@ -102,6 +102,23 @@ export default function HotelDetail() {
             <label>Room type</label>
             <select value={roomType} onChange={(e) => setRoomType(e.target.value)}>
               {hotel.roomTypes.map((r) => <option key={r}>{r}</option>)}
+            </select>
+          </div>
+          <div className="field">
+            <label>Rate plan</label>
+            <select value={ratePlan} onChange={(e) => setRatePlan(e.target.value)}>
+              <option>Best Flexible Rate</option>
+              <option>Non-refundable (save 10%)</option>
+              <option>Member Rate</option>
+            </select>
+          </div>
+          <div className="field">
+            <label>Board</label>
+            <select value={boardType} onChange={(e) => setBoardType(e.target.value)}>
+              <option>Room only</option>
+              <option>Breakfast included</option>
+              <option>Half board</option>
+              <option>Full board</option>
             </select>
           </div>
           <div className="field">
@@ -125,9 +142,15 @@ export default function HotelDetail() {
               {[1,2,3,4,5,6].map((n) => <option key={n} value={n}>{n} guest{n>1?'s':''}</option>)}
             </select>
           </div>
+          <div className="field">
+            <label>Rooms</label>
+            <select value={rooms} onChange={(e) => setRooms(e.target.value)}>
+              {[1,2,3,4].map((n) => <option key={n} value={n}>{n} room{n>1?'s':''}</option>)}
+            </select>
+          </div>
 
           <div className="divider" />
-          <div className="row"><span>${hotel.pricePerNight} × {nights} night{nights>1?'s':''}</span><span>${total}</span></div>
+          <div className="row"><span>${hotel.pricePerNight} × {nights} night{nights>1?'s':''} × {rooms} room{rooms>1?'s':''}</span><span>${total}</span></div>
           <div className="row"><span>Taxes & fees</span><span>Included</span></div>
           <div className="row total"><span>Total</span><span>${total}</span></div>
 

@@ -46,12 +46,6 @@ export default function Confirmation() {
         <div className="row total"><span>Total paid</span><span>${details.totalValue}</span></div>
       </div>
 
-      <p className="debug-note" style={{ maxWidth: 520, margin: '20px auto 0' }}>
-        🎉 The <code>purchase</code> event (with revenue and products) went to the data layer;
-        the Tags property sent it to Adobe Analytics via Web SDK. Validate it in Assurance,
-        then follow it through the Analytics Data Connector into AEP for CJA.
-      </p>
-
       <div style={{ marginTop: 24 }}>
         <Link to="/" className="btn btn-brand">Book another stay</Link>
       </div>

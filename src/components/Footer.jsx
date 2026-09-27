@@ -3,10 +3,7 @@ export default function Footer() {
     <footer className="footer">
       <div className="container footer-inner">
         <div className="logo">✦ TripNest</div>
-        <small>
-          Demo site — data flows to Adobe Analytics via Web SDK + Datastream.
-          Part of the Analytics → AEP → CJA migration demo.
-        </small>
+        <small>Find and book hotels, resorts and stays worldwide.</small>
         <small>© {new Date().getFullYear()} TripNest</small>
       </div>
     </footer>

@@ -20,11 +20,6 @@ export default function Deals() {
         </div>
       </div>
 
-      <p className="debug-note">
-        🏷️ This page pushed a <code>pageView</code> event (page name: <code>deals</code>)
-        to the data layer.
-      </p>
-
       <div className="grid" style={{ marginTop: 8 }}>
         {deals.map((h) => (
           <HotelCard key={h.id} hotel={h} />
