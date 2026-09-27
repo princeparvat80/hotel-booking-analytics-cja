@@ -25,7 +25,12 @@ export default function Checkout() {
     paymentMethod: 'credit-card', loyaltyTier: sessionUser?.loyaltyTier || 'gold',
   })
 
+  // Guard: checkout requires a signed-in user (blocks direct-URL access).
   useEffect(() => {
+    if (!getUser()) {
+      navigate(`/hotel/${id}`, { replace: true })
+      return
+    }
     if (hotel) trackCheckout(hotel, details)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])

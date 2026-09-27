@@ -27,12 +27,23 @@ function pruneNested(obj) {
   return JSON.parse(JSON.stringify(obj))
 }
 
-// Push an event: reset transient branches, add global context, apply payload.
+// Push an event in TWO steps so the Adobe Client Data Layer's merged state can
+// never leak one event's data into the next:
+//   1) a reset push that removes the transient branches (no `event` key, so no
+//      rule fires on it)
+//   2) the actual event push
+// This is required because ACDL DEEP-MERGES pushes — resetting in the same object
+// as the new values does not work (the new values win in that single object and
+// the merge keeps the old sibling keys).
 function push(payload) {
   window.adobeDataLayer = window.adobeDataLayer || []
-  const reset = {}
-  TRANSIENT.forEach((k) => { reset[k] = undefined }) // clear stale event data
 
+  // 1) reset transient branches (undefined removes the key from computed state)
+  const reset = {}
+  TRANSIENT.forEach((k) => { reset[k] = undefined })
+  window.adobeDataLayer.push(reset)
+
+  // 2) push the actual event
   const obj = {
     event: payload.event,
     eventInfo: {
@@ -40,7 +51,6 @@ function push(payload) {
       sessionDurationSec: getSessionDurationSec(),
     },
     ...getGlobalContext(),
-    ...reset,
     ...pruneNested(payload),
   }
   window.adobeDataLayer.push(obj)

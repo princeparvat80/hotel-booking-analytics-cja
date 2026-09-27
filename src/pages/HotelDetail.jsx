@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { findHotel } from '../data/hotels'
 import StarRating from '../components/StarRating.jsx'
+import SignInModal from '../components/SignInModal.jsx'
 import { trackHotelView, trackBookingStart } from '../analytics/track'
+import { getUser } from '../analytics/session'
 
 function nightsBetween(a, b) {
   const ms = new Date(b) - new Date(a)
@@ -25,6 +27,7 @@ export default function HotelDetail() {
   const [tripType, setTripType] = useState('leisure')
   const [ratePlan, setRatePlan] = useState('Best Flexible Rate')
   const [boardType, setBoardType] = useState('Breakfast included')
+  const [showSignIn, setShowSignIn] = useState(false)
 
   useEffect(() => {
     if (hotel) trackHotelView(hotel)
@@ -45,7 +48,7 @@ export default function HotelDetail() {
     )
   }
 
-  const book = () => {
+  const proceedBooking = () => {
     const details = {
       roomType, ratePlan, boardType, tripType,
       checkInDate: checkIn, checkOutDate: checkOut,
@@ -54,6 +57,16 @@ export default function HotelDetail() {
     }
     trackBookingStart(hotel, details)
     navigate(`/checkout/${hotel.id}`, { state: { details } })
+  }
+
+  // Booking requires the user to be signed in. If not, prompt sign-in and
+  // continue to checkout automatically once they log in.
+  const book = () => {
+    if (!getUser()) {
+      setShowSignIn(true)
+      return
+    }
+    proceedBooking()
   }
 
   return (
@@ -155,10 +168,23 @@ export default function HotelDetail() {
           <div className="row total"><span>Total</span><span>${total}</span></div>
 
           <button className="btn btn-primary btn-block" style={{ marginTop: 16 }} onClick={book}>
-            Book now
+            {getUser() ? 'Book now' : 'Sign in to book'}
           </button>
+          {!getUser() && (
+            <p style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'center', marginTop: 8 }}>
+              🔒 You need an account to complete a booking.
+            </p>
+          )}
         </aside>
       </div>
+
+      <SignInModal
+        open={showSignIn}
+        onClose={() => setShowSignIn(false)}
+        onSignedIn={() => proceedBooking()}
+        title="Sign in to book"
+        subtitle="Please sign in to complete your reservation."
+      />
     </div>
   )
 }

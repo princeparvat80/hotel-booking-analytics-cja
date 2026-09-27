@@ -4,7 +4,7 @@ import { trackLogin } from '../analytics/track'
 // Lightweight demo sign-in. It does NOT authenticate anything — it just captures
 // an email, pushes a `login` event to the data layer (great for the analytics
 // demo), and closes.
-export default function SignInModal({ open, onClose }) {
+export default function SignInModal({ open, onClose, onSignedIn, title, subtitle }) {
   const [email, setEmail] = useState('')
   const [tier, setTier] = useState('gold')
 
@@ -13,7 +13,8 @@ export default function SignInModal({ open, onClose }) {
   const submit = (e) => {
     e.preventDefault()
     // trackLogin persists the session and notifies the header via onUserChange.
-    trackLogin({ email, loyaltyTier: tier })
+    const user = trackLogin({ email, loyaltyTier: tier })
+    onSignedIn?.(user)
     onClose()
   }
 
@@ -21,9 +22,9 @@ export default function SignInModal({ open, onClose }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose} aria-label="Close">×</button>
-        <h3 style={{ fontSize: 22, marginBottom: 4 }}>Sign in to TripNest</h3>
+        <h3 style={{ fontSize: 22, marginBottom: 4 }}>{title || 'Sign in to TripNest'}</h3>
         <p style={{ color: 'var(--muted)', marginBottom: 18 }}>
-          Members unlock loyalty pricing and faster checkout.
+          {subtitle || 'Members unlock loyalty pricing and faster checkout.'}
         </p>
         <form onSubmit={submit}>
           <div className="field">
