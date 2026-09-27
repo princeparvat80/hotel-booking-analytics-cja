@@ -2,7 +2,7 @@
   "name": "hotel-booking-analytics-cja",
   "private": true,
   "version": "1.0.0",
-  "description": "TripNest - Hotel booking demo website that sends rich data to Adobe Analytics via Web SDK + Datastream. Built to demonstrate the Adobe Analytics -> Analytics Data Connector -> AEP -> CJA migration story.",
+  "description": "TripNest - Hotel booking demo website that sends rich data to Adobe Analytics via Data Collection (Tags) + Web SDK + Datastream. Built to demonstrate the Adobe Analytics -> Analytics Data Connector -> AEP -> CJA migration story.",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@adobe/alloy": "^2.26.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2"

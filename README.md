@@ -1,12 +1,13 @@
-# TripNest — Hotel Booking Demo (Website → Adobe Analytics via Web SDK)
+# TripNest — Hotel Booking Demo (Website → Adobe Analytics via Data Collection)
 
 **Purpose:** the *second* demo site in a two-part Adobe data-flow story. TripNest
-is a hotel-booking website that sends **rich, XDM-based data to Adobe Analytics**
-through the **Web SDK + Datastream**. It exists to demonstrate the migration path:
+is a hotel-booking website that sends **rich data to Adobe Analytics** through
+**Adobe Data Collection (a Tags/Launch property) + Web SDK + Datastream**. It
+exists to demonstrate the migration path:
 
 ```
-Website (Web SDK) → Datastream (Adobe Analytics service) → Adobe Analytics
-        → Analytics Data Connector → AEP → CJA
+Website → adobeDataLayer → Tags property (Web SDK) → Datastream (Analytics service)
+        → Adobe Analytics → Analytics Data Connector → AEP → CJA
 ```
 
 This is the "bring existing Analytics data into AEP" chapter, complementing the
@@ -20,86 +21,85 @@ first demo (an e-commerce store that sends directly to AEP).
  User action
      │
      ▼
- window.adobeDataLayer.push(...)          ← readable event, visible in console/Assurance
+ window.adobeDataLayer.push({ event, ... })     ← the ONLY thing the website does
      │
      ▼
- Web SDK  alloy("sendEvent", { xdm })     ← XDM matching "TripNest Booking ExperienceEvent"
+ Tags (Launch) property
+   ├─ Adobe Client Data Layer extension  (listens for events)
+   ├─ Data Elements                      (map data layer → XDM)
+   ├─ Rules  (event = "<name>")          (trigger Send Event)
+   └─ AEP Web SDK extension  →  sendEvent
      │
      ▼
- Adobe Edge Network  (Datastream)
-     │  Adobe Analytics service auto-maps web + commerce XDM → Analytics variables
+ Adobe Edge Network (Datastream)  → Adobe Analytics service auto-maps web+commerce XDM
+     │
      ▼
  Adobe Analytics report suite
-     │  Analytics Data Connector (source)
+     │  Analytics Data Connector
      ▼
  AEP dataset  →  Customer Journey Analytics
 ```
 
-## The funnel and the events it sends
+## The funnel and the events it pushes
 
-| Page / action | Data layer event | XDM `eventType` | Analytics result (auto-mapped) |
+| Page / action | `adobeDataLayer` event | Tags rule → XDM `eventType` | Analytics result |
 |---|---|---|---|
-| Home load | `pageView` | `web.webpagedetails.pageViews` | page view + pageName |
-| Search / filter | `search` | `commerce.productListViews` | search event |
+| Home / Deals / Help load | `pageView` | `web.webpagedetails.pageViews` | page view + pageName |
+| Search / filter / sort | `search` | `commerce.productListViews` | search event |
 | Hotel detail load | `hotelView` | `commerce.productViews` | prodView |
 | Book now | `bookingStart` | `commerce.productListAdds` | scAdd |
 | Checkout load | `checkout` | `commerce.checkouts` | scCheckout |
 | Confirm & pay | `purchase` | `commerce.order` | purchase + revenue + products |
+| Sign in | `login` | link/custom event | login event |
 
-See **[SCHEMA.md](SCHEMA.md)** for the full XDM schema spec and the variable map.
+- **[SCHEMA.md](SCHEMA.md)** — the XDM schema spec + variable map.
+- **[DATA-COLLECTION-SETUP.md](DATA-COLLECTION-SETUP.md)** — the exact Tags
+  property setup (extensions, data elements, rules, embed).
 
 ---
 
-## Setup
+## Run the site
 
 ```bash
 npm install
-cp .env.example .env   # then fill in the two Adobe values
 npm run dev            # http://localhost:5174
 ```
 
-### Adobe configuration (done in Adobe, in parallel)
-1. Create the XDM schema **TripNest Booking ExperienceEvent** (see SCHEMA.md).
-2. Create a **Datastream** with the **Adobe Analytics** service enabled → your
-   report suite (e.g. `tripnest-analytics-dev`).
-3. Put the **Datastream ID** and **IMS Org ID** into `.env`.
-4. (Optional) Also enable the **AEP** service on the datastream to land XDM in a
-   dataset directly.
+The website has **no Adobe config in code** — it only writes to
+`window.adobeDataLayer`. All sending is configured in the Tags property. Until
+you paste your Tags embed into `index.html`, the site runs in
+**data-layer-only mode**: every event is logged to the console and visible via
+`window.adobeDataLayer`, which is perfect for walking through the flow.
 
-If `.env` is not configured, the site runs in **data-layer-only mode**: every
-event is logged to the console and pushed to `window.adobeDataLayer`, but no
-network call is made. This is handy for walking through the flow before Adobe is
-wired up.
+### To connect Adobe (done in the Adobe UI — see DATA-COLLECTION-SETUP.md)
+1. Create the datastream (Adobe Analytics service → report suite).
+2. Create the Tags property (Web SDK + ACDL extensions, data elements, rules).
+3. Publish it and paste the **embed script** into `index.html`.
 
 ---
 
-## How to validate (demo script)
-
-1. **Browser console** — every action logs `[TripNest][WebSDK] sent ...` and
-   pushes to `window.adobeDataLayer` (type `adobeDataLayer` in the console).
-2. **Adobe Assurance** — connect a session and watch the `sendEvent` calls, the
-   XDM payloads, and the Edge Network response.
-3. **Adobe Analytics** — confirm hits in real-time / Workspace against the report
-   suite.
-4. **Analytics Data Connector → AEP** — verify the dataset fills, then build a
-   **CJA** connection + data view on top of it.
+## Validate (demo script)
+1. **Console** — every action logs `[TripNest][dataLayer] <event>`. Type
+   `adobeDataLayer` in the console to inspect the full state.
+2. **Assurance / Experience Platform Debugger** — watch the ACDL event, the rule
+   firing, the Web SDK `sendEvent`, and the Edge response.
+3. **Adobe Analytics** — confirm hits in real-time / Workspace.
+4. **Analytics Data Connector → AEP → CJA** — bring the report suite into AEP and
+   build a CJA data view.
 
 ---
 
 ## Tech
 - React 18 + Vite
 - react-router-dom
-- @adobe/alloy (Web SDK)
+- Adobe Data Collection (Tags) + Web SDK — configured in Adobe, not in code
 
 ## Project structure
 ```
 src/
-  analytics/
-    config.js     env-driven config
-    alloy.js      Web SDK bootstrap
-    schema.js     app data → XDM builders
-    track.js      the tracking API used by the UI
-  components/     Header, Footer, SearchBar, HotelCard, StarRating
-  pages/          Home, SearchResults, HotelDetail, Checkout, Confirmation
-  data/hotels.js  mock inventory
+  analytics/track.js   push rich events to window.adobeDataLayer (the only Adobe touchpoint)
+  components/          Header (+ Sign-in modal), Footer, SearchBar, HotelCard, StarRating
+  pages/               Home, SearchResults, HotelDetail, Checkout, Confirmation, Deals, Help
+  data/hotels.js       mock inventory
+index.html             holds the adobeDataLayer init + Tags embed placeholder
 ```

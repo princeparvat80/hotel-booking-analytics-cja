@@ -6,6 +6,8 @@ import SearchResults from './pages/SearchResults.jsx'
 import HotelDetail from './pages/HotelDetail.jsx'
 import Checkout from './pages/Checkout.jsx'
 import Confirmation from './pages/Confirmation.jsx'
+import Deals from './pages/Deals.jsx'
+import Help from './pages/Help.jsx'
 
 export default function App() {
   return (
@@ -18,6 +20,8 @@ export default function App() {
           <Route path="/hotel/:id" element={<HotelDetail />} />
           <Route path="/checkout/:id" element={<Checkout />} />
           <Route path="/confirmation" element={<Confirmation />} />
+          <Route path="/deals" element={<Deals />} />
+          <Route path="/help" element={<Help />} />
         </Routes>
       </main>
       <Footer />

@@ -61,8 +61,10 @@ export default function SearchResults() {
   const applyFilter = (filterDesc) => {
     trackSearch({
       destination: destination || 'all',
-      searchTerm: `${destination || 'all'} | filter:${filterDesc} | sort:${sort}`,
+      searchTerm: destination || 'all',
       resultsCount: filtered.length,
+      filterApplied: filterDesc,
+      sortOrder: sort,
     })
   }
 
@@ -78,8 +80,9 @@ export default function SearchResults() {
 
       <p className="debug-note">
         🔎 Data flow: this search pushed a <code>search</code> event to
-        <code> window.adobeDataLayer</code> and sent a <code>commerce.productListViews</code> XDM
-        event to Adobe Analytics via Web SDK.
+        <code> window.adobeDataLayer</code>. The Tags property maps it to a
+        <code> commerce.productListViews</code> XDM event and sends it to Adobe
+        Analytics via the Web SDK + datastream.
       </p>
 
       <div className="results" style={{ marginTop: 24 }}>

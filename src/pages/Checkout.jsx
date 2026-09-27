@@ -62,9 +62,9 @@ export default function Checkout() {
       </p>
 
       <p className="debug-note">
-        🧾 This page sent a <code>commerce.checkouts</code> (scCheckout) event. Clicking
-        <b> Confirm &amp; pay</b> fires <code>commerce.order</code> with <code>purchases=1</code> and
-        revenue — the Analytics <b>purchase</b> event.
+        🧾 This page pushed a <code>checkout</code> event (→ commerce.checkouts / scCheckout).
+        Clicking <b>Confirm &amp; pay</b> pushes <code>purchase</code> (→ commerce.order with
+        revenue) — the Analytics <b>purchase</b> event. The Tags property sends both via Web SDK.
       </p>
 
       <form className="checkout-grid" onSubmit={pay}>

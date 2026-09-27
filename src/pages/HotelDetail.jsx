@@ -89,8 +89,9 @@ export default function HotelDetail() {
           </div>
 
           <p className="debug-note">
-            👁️ On load this page sent a <code>commerce.productViews</code> (prodView) XDM event
-            to Adobe Analytics. Clicking <b>Book now</b> sends <code>commerce.productListAdds</code> (scAdd).
+            👁️ On load this page pushed a <code>hotelView</code> event to the data layer
+            (the Tags property maps it to <code>commerce.productViews</code> / prodView).
+            Clicking <b>Book now</b> pushes <code>bookingStart</code> (→ productListAdds / scAdd).
           </p>
         </div>
 
