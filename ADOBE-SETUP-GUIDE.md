@@ -16,13 +16,17 @@ Website → adobeDataLayer → Tags property (Web SDK) → Datastream
 | # | Component | Name to use | Notes |
 |---|---|---|---|
 | ✅ | Report Suite | ID `aeptripnestprince` · Name `Prince - TripNest` | already created |
-| 1 | XDM Schema | `Prince - TripNest Booking Event` | class = **XDM ExperienceEvent** |
-| 2 | Custom field group | `Prince - TripNest Booking Details` | booking + search objects (see §4) |
+| ✅ | XDM Schema | `Prince - TripNest Booking Event` | class = **XDM ExperienceEvent**; tenant = `_aepsupport` |
+| ✅ | Custom field group | `Prince - TripNest Booking Details` | booking + search objects (see §4) |
 | 3 | Dataset *(optional, only if you also want XDM in AEP directly)* | `Prince - TripNest Booking Event Dataset` | built on schema #1 |
-| 4 | Datastream | `Prince - TripNest Web SDK` | env: Development; ID is auto-generated — copy it |
-| 5 | Tag (Launch) property | `Prince - TripNest Web` | type = Web |
+| ✅ | Datastream | `Prince - TripNest Web SDK` | **ID `e0a98c1b-8e3a-4182-907f-17d529928ed5`** — services not added yet |
+| ✅ | Tag (Launch) property | `Prince - TripNest Web` | Core extension added; needs Web SDK + ACDL |
 | 6 | Data elements | prefix `TripNest - ...` | e.g. `TripNest - Page Name` |
 | 7 | Rules | prefix `TripNest - ...` | e.g. `TripNest - Page View` |
+
+**Live values captured** — sandbox `princeparvat-prod` (VA7):
+- XDM tenant prefix: `_aepsupport`
+- Datastream ID: `e0a98c1b-8e3a-4182-907f-17d529928ed5`
 
 The Datastream **ID** and your **IMS Org ID** go into the Tag property's Web SDK
 extension (not in the website code).
@@ -89,7 +93,7 @@ extension (not in the website code).
 
 ## 4. Schema (custom field group `Prince - TripNest Booking Details`)
 
-Custom fields live under your tenant prefix (shown as `_tripnest`; replace with
+Custom fields live under your tenant prefix (shown as `_aepsupport`; replace with
 your real tenant).
 
 **Object `booking`:** bookingId (string), hotelId (string), hotelName (string),
@@ -155,32 +159,32 @@ is the dependable choice.
 
 In the Datastream → **Adobe Analytics** service → **Edit Mapping**, map each XDM
 source field to its Analytics target. Standard fields auto-map; add these custom
-ones (tenant shown as `_tripnest`):
+ones (tenant shown as `_aepsupport`):
 
 | XDM source field | Analytics target |
 |---|---|
-| `_tripnest.search.destination` | eVar1 |
-| `_tripnest.search.searchTerm` | eVar2 |
-| `_tripnest.booking.hotelName` | eVar3 |
-| `_tripnest.booking.hotelId` | eVar4 |
-| `_tripnest.booking.starRating` | eVar5 |
-| `_tripnest.booking.roomType` | eVar6 |
-| `_tripnest.booking.ratePlan` | eVar7 |
-| `_tripnest.booking.boardType` | eVar8 |
-| `_tripnest.booking.tripType` | eVar9 / prop6 |
-| `_tripnest.booking.nights` | eVar10 |
-| `_tripnest.booking.guests` | eVar11 |
-| `_tripnest.booking.rooms` | eVar12 |
-| `_tripnest.booking.bookingId` | eVar13 |
-| `_tripnest.booking.paymentMethod` | eVar14 |
-| `_tripnest.booking.loyaltyTier` | eVar15 / prop7 |
-| `_tripnest.search.filterApplied` | eVar16 / prop9 |
-| `_tripnest.search.sortOrder` | eVar17 / prop10 |
+| `_aepsupport.search.destination` | eVar1 |
+| `_aepsupport.search.searchTerm` | eVar2 |
+| `_aepsupport.booking.hotelName` | eVar3 |
+| `_aepsupport.booking.hotelId` | eVar4 |
+| `_aepsupport.booking.starRating` | eVar5 |
+| `_aepsupport.booking.roomType` | eVar6 |
+| `_aepsupport.booking.ratePlan` | eVar7 |
+| `_aepsupport.booking.boardType` | eVar8 |
+| `_aepsupport.booking.tripType` | eVar9 / prop6 |
+| `_aepsupport.booking.nights` | eVar10 |
+| `_aepsupport.booking.guests` | eVar11 |
+| `_aepsupport.booking.rooms` | eVar12 |
+| `_aepsupport.booking.bookingId` | eVar13 |
+| `_aepsupport.booking.paymentMethod` | eVar14 |
+| `_aepsupport.booking.loyaltyTier` | eVar15 / prop7 |
+| `_aepsupport.search.filterApplied` | eVar16 / prop9 |
+| `_aepsupport.search.sortOrder` | eVar17 / prop10 |
 | `visitor.type` (context) | eVar18 / prop8 |
 | `user.customerId` | eVar19 |
 | `device.type` (context) | eVar20 / prop5 |
 | `marketing.campaign` | eVar21 |
-| `_tripnest.booking.cancellationPolicy` | eVar22 |
+| `_aepsupport.booking.cancellationPolicy` | eVar22 |
 | `web.webPageDetails.name` | prop1 (auto → pageName) |
 | page site section | prop2 |
 

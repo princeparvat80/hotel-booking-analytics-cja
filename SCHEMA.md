@@ -26,7 +26,7 @@ automatically.
 
 ### Custom field group: `TripNest Booking Details`
 
-Custom fields live under your tenant prefix (shown here as `_tripnest`; replace
+Custom fields live under your tenant prefix (shown here as `_aepsupport`; replace
 with your real tenant, e.g. `_princeparvat`).
 
 **Object `booking`:**
