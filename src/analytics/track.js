@@ -7,52 +7,79 @@
 //
 //   adobeDataLayer.push(...)  ->  Tags (ACDL ext + rules)  ->  Web SDK  ->  Analytics
 //
-// Every push is enriched with a global context (site / device / visitor / session
-// / user / marketing) from session.js, so each event carries full analytics data.
-// Field names mirror SCHEMA.md so Tags data elements map cleanly.
+// IMPORTANT: the Adobe Client Data Layer keeps a MERGED running state. To stop
+// event-specific data (e.g. a purchase) from leaking into the next event, every
+// push first resets the transient branches to `undefined` (which removes them
+// from the computed state), then applies the current event's data.
+//
+// The `booking` and `search` objects mirror the XDM schema field names 1:1, so in
+// Tags you can map the WHOLE object (_aepsupport.booking, _aepsupport.search)
+// instead of field by field.
 // ---------------------------------------------------------------------------
 
 import { getGlobalContext, loginUser, logoutUser, getSessionDurationSec } from './session'
 
-// Strip undefined/null so the data layer stays clean.
-function prune(obj) {
+// Branches that belong to a single event and must not persist across events.
+const TRANSIENT = ['commerce', 'product', 'booking', 'search', 'authentication', 'hotel']
+
+// Remove nested undefined/null from the event payload (keeps its shape).
+function pruneNested(obj) {
   return JSON.parse(JSON.stringify(obj))
 }
 
-// Push an event, merged with the global context.
+// Push an event: reset transient branches, add global context, apply payload.
 function push(payload) {
   window.adobeDataLayer = window.adobeDataLayer || []
-  const clean = prune({
+  const reset = {}
+  TRANSIENT.forEach((k) => { reset[k] = undefined }) // clear stale event data
+
+  const obj = {
     event: payload.event,
     eventInfo: {
       timestamp: new Date().toISOString(),
       sessionDurationSec: getSessionDurationSec(),
     },
     ...getGlobalContext(),
-    ...payload,
-  })
-  window.adobeDataLayer.push(clean)
-  console.info('[TripNest][dataLayer]', clean.event, clean)
+    ...reset,
+    ...pruneNested(payload),
+  }
+  window.adobeDataLayer.push(obj)
+  console.info('[TripNest][dataLayer]', obj.event, obj)
 }
 
-// Build a rich product list item (mirrors XDM productListItems -> Analytics products).
-function productItem(hotel, { nights = 1, totalValue, roomType, ratePlan, boardType } = {}) {
+// A single product list item -> XDM productListItems -> Analytics products.
+function productItem(hotel, { nights = 1, totalValue } = {}) {
   const price = totalValue != null ? totalValue : hotel.pricePerNight * nights
   return {
     id: hotel.id,
     name: hotel.name,
     category: 'Hotels',
-    subCategory: `${hotel.stars}-star`,
-    city: hotel.city,
-    country: hotel.country,
-    starRating: hotel.stars,
-    guestRating: hotel.rating,
-    roomType,
-    ratePlan,
-    boardType,
     quantity: nights,
-    unitPrice: hotel.pricePerNight,
     price,
+  }
+}
+
+// The `booking` object — field names match the XDM schema _aepsupport.booking.
+function bookingBlock(hotel, details = {}) {
+  return {
+    bookingId: details.bookingId,
+    hotelId: hotel.id,
+    hotelName: hotel.name,
+    hotelRating: hotel.rating,
+    starRating: hotel.stars,
+    roomType: details.roomType,
+    ratePlan: details.ratePlan,
+    boardType: details.boardType,
+    tripType: details.tripType,
+    checkInDate: details.checkInDate,
+    checkOutDate: details.checkOutDate,
+    nights: details.nights,
+    guests: details.guests,
+    rooms: details.rooms || 1,
+    totalValue: details.totalValue,
+    paymentMethod: details.paymentMethod,
+    loyaltyTier: details.loyaltyTier,
+    cancellationPolicy: details.cancellationPolicy || 'free-24h',
   }
 }
 
@@ -72,10 +99,8 @@ export function trackPageView(pageName) {
   })
 }
 
-export function trackSearch({
-  destination, searchTerm, resultsCount, filterApplied, sortOrder,
-  checkIn, checkOut, guests, nights, tripType,
-}) {
+// Only the 5 schema `search` fields are pushed (extras are ignored on purpose).
+export function trackSearch({ destination, searchTerm, resultsCount, filterApplied, sortOrder }) {
   push({
     event: 'search',
     commerce: { productListViews: { value: 1 } },
@@ -85,11 +110,6 @@ export function trackSearch({
       resultsCount,
       filterApplied: filterApplied || 'none',
       sortOrder: sortOrder || 'recommended',
-      checkInDate: checkIn,
-      checkOutDate: checkOut,
-      nights,
-      guests: guests != null ? Number(guests) : undefined,
-      tripType,
     },
   })
 }
@@ -99,17 +119,7 @@ export function trackHotelView(hotel) {
     event: 'hotelView',
     commerce: { productViews: { value: 1 } },
     product: productItem(hotel),
-    hotel: {
-      id: hotel.id,
-      name: hotel.name,
-      city: hotel.city,
-      country: hotel.country,
-      guestRating: hotel.rating,
-      reviews: hotel.reviews,
-      starRating: hotel.stars,
-      pricePerNight: hotel.pricePerNight,
-      amenities: hotel.amenities,
-    },
+    booking: bookingBlock(hotel, {}),
   })
 }
 
@@ -118,8 +128,7 @@ export function trackBookingStart(hotel, details) {
     event: 'bookingStart',
     commerce: { productListAdds: { value: 1 } },
     product: productItem(hotel, details),
-    hotel: { id: hotel.id, name: hotel.name, city: hotel.city, guestRating: hotel.rating },
-    booking: bookingBlock(details),
+    booking: bookingBlock(hotel, details),
   })
 }
 
@@ -128,8 +137,7 @@ export function trackCheckout(hotel, details) {
     event: 'checkout',
     commerce: { checkouts: { value: 1 } },
     product: productItem(hotel, details),
-    hotel: { id: hotel.id, name: hotel.name, city: hotel.city },
-    booking: bookingBlock(details),
+    booking: bookingBlock(hotel, details),
   })
 }
 
@@ -142,12 +150,13 @@ export function trackPurchase(hotel, details) {
         purchaseID: details.bookingId,
         priceTotal: details.totalValue,
         currencyCode: 'USD',
-        payments: [{ paymentType: details.paymentMethod, currencyCode: 'USD', paymentAmount: details.totalValue }],
+        payments: [
+          { paymentType: details.paymentMethod, currencyCode: 'USD', paymentAmount: details.totalValue },
+        ],
       },
     },
     product: productItem(hotel, details),
-    hotel: { id: hotel.id, name: hotel.name, city: hotel.city, guestRating: hotel.rating },
-    booking: bookingBlock(details),
+    booking: bookingBlock(hotel, details),
   })
 }
 
@@ -164,27 +173,4 @@ export function trackLogin({ email, loyaltyTier = 'gold' }) {
 export function trackLogout() {
   logoutUser()
   push({ event: 'logout', authentication: { action: 'logout', success: true } })
-}
-
-// Rich booking block shared by booking/checkout/purchase.
-function bookingBlock(details = {}) {
-  const taxes = details.totalValue ? Math.round(details.totalValue * 0.12 * 100) / 100 : undefined
-  return {
-    bookingId: details.bookingId,
-    roomType: details.roomType,
-    ratePlan: details.ratePlan,
-    boardType: details.boardType,
-    tripType: details.tripType,
-    checkInDate: details.checkInDate,
-    checkOutDate: details.checkOutDate,
-    nights: details.nights,
-    guests: details.guests,
-    rooms: details.rooms || 1,
-    subtotal: details.totalValue,
-    taxes,
-    totalValue: details.totalValue,
-    paymentMethod: details.paymentMethod,
-    loyaltyTier: details.loyaltyTier,
-    cancellationPolicy: details.cancellationPolicy || 'free-24h',
-  }
 }
