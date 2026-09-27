@@ -27,23 +27,34 @@ function pruneNested(obj) {
   return JSON.parse(JSON.stringify(obj))
 }
 
-// Push an event in TWO steps so the Adobe Client Data Layer's merged state can
-// never leak one event's data into the next:
-//   1) a reset push that removes the transient branches (no `event` key, so no
-//      rule fires on it)
-//   2) the actual event push
-// This is required because ACDL DEEP-MERGES pushes — resetting in the same object
-// as the new values does not work (the new values win in that single object and
-// the merge keeps the old sibling keys).
-function push(payload) {
-  window.adobeDataLayer = window.adobeDataLayer || []
+// The Adobe Client Data Layer processes pushes ASYNCHRONOUSLY in batches. If two
+// events fire in the same tick (e.g. pageView + search, or login -> bookingStart
+// -> checkout), every Tags rule ends up reading the SAME final merged state and
+// the events bleed into each other. To prevent that we serialize events through a
+// small queue and space them out, so each event is processed on its own.
+const EVENT_GAP_MS = 350
+let queue = []
+let draining = false
+
+function drain() {
+  if (!queue.length) { draining = false; return }
+  draining = true
+  const obj = queue.shift()
 
   // 1) reset transient branches (undefined removes the key from computed state)
   const reset = {}
   TRANSIENT.forEach((k) => { reset[k] = undefined })
   window.adobeDataLayer.push(reset)
 
-  // 2) push the actual event
+  // 2) push the actual event (its own object, its own processing cycle)
+  window.adobeDataLayer.push(obj)
+  console.info('[TripNest][dataLayer]', obj.event, obj)
+
+  setTimeout(drain, EVENT_GAP_MS)
+}
+
+function push(payload) {
+  window.adobeDataLayer = window.adobeDataLayer || []
   const obj = {
     event: payload.event,
     eventInfo: {
@@ -53,8 +64,8 @@ function push(payload) {
     ...getGlobalContext(),
     ...pruneNested(payload),
   }
-  window.adobeDataLayer.push(obj)
-  console.info('[TripNest][dataLayer]', obj.event, obj)
+  queue.push(obj)
+  if (!draining) drain()
 }
 
 // A single product list item -> XDM productListItems -> Analytics products.
