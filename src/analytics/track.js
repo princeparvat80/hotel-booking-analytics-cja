@@ -36,9 +36,26 @@ const EVENT_GAP_MS = 350
 let queue = []
 let draining = false
 
+// Hold the FIRST event until the Web SDK has resolved the ECID (set on
+// window._tnECID by the "TripNest - Capture ECID" Tags rule), so even the first
+// pageView carries eVar23. Never wait longer than ECID_MAX_WAIT so a missing rule
+// or slow edge can't block tracking forever.
+const ECID_MAX_WAIT_MS = 2500
+let firstWaitStart = null
+
 function drain() {
   if (!queue.length) { draining = false; return }
   draining = true
+
+  // Gate only until the ECID is available (or we time out); once present, no wait.
+  if (!window._tnECID) {
+    if (firstWaitStart === null) firstWaitStart = Date.now()
+    if (Date.now() - firstWaitStart < ECID_MAX_WAIT_MS) {
+      setTimeout(drain, 50)
+      return
+    }
+  }
+
   const obj = queue.shift()
 
   // 1) reset transient branches (undefined removes the key from computed state)

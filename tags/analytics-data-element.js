@@ -12,6 +12,27 @@
 //   Page/Products/Revenue/purchase come from XDM auto-map (not set here)
 // ---------------------------------------------------------------------------
 
+// ECID: prefer the value captured by the Capture ECID rule (window._tnECID);
+// fall back to parsing the Web SDK identity cookie so it is present on nearly
+// every hit (including returning visitors' first hit).
+function getECID() {
+  if (window._tnECID) return window._tnECID;
+  var out = '';
+  document.cookie.split(';').forEach(function (c) {
+    c = c.trim();
+    if (c.indexOf('kndctr_') === 0 && c.indexOf('_identity=') > -1) {
+      try {
+        var v = c.substring(c.indexOf('=') + 1);
+        var d = atob(v.replace(/-/g, '+').replace(/_/g, '/'));
+        var m = d.match(/[0-9]{38}/); // ECID is 38 digits
+        if (m) out = m[0];
+      } catch (e) {}
+    }
+  });
+  if (out) window._tnECID = out; // cache for subsequent hits
+  return out;
+}
+
 var dl = (window.adobeDataLayer && window.adobeDataLayer.getState)
   ? window.adobeDataLayer.getState() : {};
 var booking   = dl.booking   || {};
@@ -46,8 +67,9 @@ if (visitor.type)                a.eVar19 = visitor.type;
 if (device.type)                 a.eVar20 = device.type;
 if (marketing.campaign)          a.eVar21 = marketing.campaign;
 if (booking.cancellationPolicy)  a.eVar22 = booking.cancellationPolicy;
-// ECID captured by the "TripNest - Capture ECID" rule (see capture-ecid-rule.js)
-if (window._tnECID)              a.eVar23 = window._tnECID;
+// ECID on every hit (captured rule value, else parsed from identity cookie)
+var ecid = getECID();
+if (ecid)                        a.eVar23 = ecid;
 
 // ---------- props: pathing / real-time ----------
 if (page.name)                   a.prop1  = page.name;
