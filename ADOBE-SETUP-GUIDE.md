@@ -78,8 +78,11 @@ extension (not in the website code).
 | eVar9 | Trip Type | eVar20 | Device Type |
 | eVar10 | Nights | eVar21 | Campaign |
 | eVar11 | Guests | eVar22 | Cancellation Policy |
+| | | eVar23 | ECID |
 
 Set allocation = **Most Recent (last)**, expiration = **Visit** for all.
+ECID (eVar23) is captured by the `TripNest - Capture ECID` rule
+(`tags/capture-ecid-rule.js`) via the Web SDK `getIdentity` command.
 
 **props (traffic variables)** — pathing / real-time:
 

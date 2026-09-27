@@ -46,6 +46,8 @@ if (visitor.type)                a.eVar19 = visitor.type;
 if (device.type)                 a.eVar20 = device.type;
 if (marketing.campaign)          a.eVar21 = marketing.campaign;
 if (booking.cancellationPolicy)  a.eVar22 = booking.cancellationPolicy;
+// ECID captured by the "TripNest - Capture ECID" rule (see capture-ecid-rule.js)
+if (window._tnECID)              a.eVar23 = window._tnECID;
 
 // ---------- props: pathing / real-time ----------
 if (page.name)                   a.prop1  = page.name;
