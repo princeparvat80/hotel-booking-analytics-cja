@@ -63,7 +63,7 @@ extension (not in the website code).
 | event4 | Login | Counter |
 | event5 | Booking Revenue | Currency |
 
-**eVars (conversion variables):**
+**eVars (conversion variables)** — persistent, for attributing bookings/revenue:
 
 | eVar | Name | eVar | Name |
 |---|---|---|---|
@@ -73,13 +73,15 @@ extension (not in the website code).
 | eVar4 | Hotel ID | eVar15 | Loyalty Tier |
 | eVar5 | Star Rating | eVar16 | Filter Applied |
 | eVar6 | Room Type | eVar17 | Sort Order |
-| eVar7 | Rate Plan | eVar18 | Visitor Type |
-| eVar8 | Board Type | eVar19 | Customer ID |
+| eVar7 | Rate Plan | eVar18 | Page Name |
+| eVar8 | Board Type | eVar19 | Visitor Type |
 | eVar9 | Trip Type | eVar20 | Device Type |
 | eVar10 | Nights | eVar21 | Campaign |
 | eVar11 | Guests | eVar22 | Cancellation Policy |
 
-**props (traffic variables):**
+Set allocation = **Most Recent (last)**, expiration = **Visit** for all.
+
+**props (traffic variables)** — pathing / real-time:
 
 | prop | Name | prop | Name |
 |---|---|---|---|
@@ -88,6 +90,11 @@ extension (not in the website code).
 | prop3 | Destination | prop8 | Visitor Type |
 | prop4 | Hotel Name | prop9 | Filter Applied |
 | prop5 | Device Type | prop10 | Sort Order |
+
+> The exact data element code that sets these is in `tags/analytics-data-element.js`.
+> Numeric values (nights, guests) are eVars here for dimensional analysis; if you
+> want sums/averages, add them as **counter events** instead. Customer ID is best
+> modeled as an **identity**, not an eVar.
 
 ---
 
